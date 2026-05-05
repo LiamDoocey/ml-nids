@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PiSentry - ML-Powered Network Intrusion Detection</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="style.css" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <span class="nav-logo">PiSentry</span>
+    <ul class="nav-links">
+      <li><a href="#pipeline">Pipeline</a></li>
+      <li><a href="#metrics">Metrics</a></li>
+      <li><a href="#stack">Stack</a></li>
+      <li><a href="https://github.com/LiamDoocey/PiSentry">GitHub</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="container">
+    <div class="hero-tag">● System active</div>
+    <h1>ML-Powered Network<br>Intrusion Detection</h1>
+    <p>Real-time network intrusion detection on a Raspberry Pi 5. Combines a Random Forest classifier trained on CIC-IDS-2017 with AbuseIPDB threat intelligence to detect attacks across 13 attack vectors - passively, with zero network impact.</p>
+    <div class="hero-actions">
+      <a href="https://github.com/LiamDoocey/PiSentry" class="btn btn-blue">View on GitHub</a>
+      <a href="#pipeline" class="btn">How it works</a>
+    </div>
+    <div class="stats-row">
+      <div><span class="stat-num">0.94</span><span class="stat-label">Macro F1</span></div>
+      <div><span class="stat-num">13</span><span class="stat-label">Attack classes</span></div>
+      <div><span class="stat-num">70</span><span class="stat-label">Flow features</span></div>
+      <div><span class="stat-num">~30ms</span><span class="stat-label">Prediction time</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- PIPELINE -->
+<section id="pipeline">
+  <div class="container">
+    <h2>Detection Pipeline</h2>
+    <p class="section-sub">Every packet on the network passes through a four-stage pipeline running on the Pi 5.</p>
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div>
+          <div class="step-title">Packet Capture</div>
+          <div class="step-desc">Scapy listens passively on the mirror port. The TP-Link TL-SG105E managed switch copies all traffic to the NIDS - it never sits in the traffic path.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">02</span>
+        <div>
+          <div class="step-title">Flow Aggregation</div>
+          <div class="step-desc">Packets are grouped into bidirectional TCP sessions tracked by FIN/RST flags, or UDP flows tracked by timeout windows.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">03</span>
+        <div>
+          <div class="step-title">Feature Extraction</div>
+          <div class="step-desc">70 statistical features extracted per flow - matching the CIC-IDS-2017 feature set exactly, including column order.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">04</span>
+        <div>
+          <div class="step-title">Two-Layer Detection</div>
+          <div class="step-desc">AbuseIPDB checks source and destination IPs first. If clean, Random Forest classifies the flow across 13 attack types.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 3rem;">
+      <h2>Two-Layer Detection</h2>
+      <div class="layers">
+        <div class="layer">
+          <div class="layer-num">LAYER 01</div>
+          <h3>Threat Intelligence</h3>
+          <p>Source and destination IPs are checked against the AbuseIPDB community database. Any IP scoring above 50/100 triggers an immediate SMS alert - no ML classification needed.</p>
+        </div>
+        <div class="layer">
+          <div class="layer-num">LAYER 02</div>
+          <h3>ML Classification</h3>
+          <p>If no threat intel hit, the flow vector is passed to the Random Forest classifier. A custom 50% confidence threshold filters uncertain predictions before alerting.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- METRICS -->
+<section id="metrics">
+  <div class="container">
+    <h2>Model Metrics</h2>
+    <p class="section-sub">Trained on CIC-IDS-2017, 80/20 stratified split - 743,216 training / 185,805 test samples.</p>
+
+    <div class="metrics-row">
+      <div class="metric"><span class="metric-val">0.94</span><span class="metric-label">Macro F1</span></div>
+      <div class="metric"><span class="metric-val">39s</span><span class="metric-label">Train time</span></div>
+      <div class="metric"><span class="metric-val">~30ms</span><span class="metric-label">Per flow on Pi 5</span></div>
+      <div class="metric"><span class="metric-val">929K</span><span class="metric-label">Training rows</span></div>
+    </div>
+
+    <div style="margin-top: 2.5rem;">
+      <table class="score-table">
+        <thead>
+          <tr>
+            <th>Class</th>
+            <th>F1 Score</th>
+            <th>Live Detected</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>BENIGN</td><td><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill hi" style="width:100%"></div></div><span class="score-val">1.00</span></div></td><td>✓</td></tr>
+          <tr><td>DDoS</td><td><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill hi" style="width:100%"></div></div><span class="score-val">1.00</span></div></td><td>✓</td></tr>
+          <tr><td>DoS GoldenEye</td><td><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill hi" style="width:100%"></div></div><span class="score-val">1.00</span></div></td><td>✓</td></tr>
+          <tr><td>DoS Hulk</td><td><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill hi" style="width:100%"></div></div><span class="score-val">1.00</span></div></td><td>✓</td></tr>
+          <tr><td>DoS Slowhttptest</td><td><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill hi" style="width:100%"></div></div><span class="score-val">1.00</span></div></td><td>✓</td></tr>
+          <tr><td>DoS Slowloris</td><td><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill hi" style="width:100%"></div></div><span class="score-val">1.00</span></div></td><td>✓</td></tr>
+          <tr><td>FTP-Patator</td><td><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill hi" style="width:100%"></div></div><span class="score-val">1.00</span></div></td><td>✓</td></tr>
+          <tr><td>PortScan</td><td><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill hi" style="width:100%"></div></div><span class="score-val">1.00</span></div></td><td>✓</td></tr>
+          <tr><td>SSH-Patator</td><td><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill hi" style="width:100%"></div></div><span class="score-val">1.00</span></div></td><td>✓</td></tr>
+          <tr><td>Other Attack</td><td><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill hi" style="width:99%"></div></div><span class="score-val">0.99</span></div></td><td>✗</td></tr>
+          <tr><td>Bot</td><td><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill" style="width:90%"></div></div><span class="score-val">0.90</span></div></td><td>✗</td></tr>
+          <tr><td>Web Attack — Brute Force</td><td><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill mid" style="width:75%"></div></div><span class="score-val">0.75</span></div></td><td>✗</td></tr>
+          <tr><td>Web Attack — XSS</td><td><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill mid" style="width:61%"></div></div><span class="score-val">0.61</span></div></td><td>✗</td></tr>
+          <tr><td><strong style="color:#e6edf3">Macro Average</strong></td><td><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill" style="width:94%"></div></div><span class="score-val" style="color:#58a6ff;font-weight:500">0.94</span></div></td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section id="stack">
+  <div class="container">
+    <h2>Tech Stack</h2>
+    <p class="section-sub">Built entirely on open source tools, deployable on affordable hardware.</p>
+    <div class="tech-grid">
+      <div class="tech-item"><span class="tech-name">Python 3.12</span><span class="tech-role">Core language</span></div>
+      <div class="tech-item"><span class="tech-name">Scapy</span><span class="tech-role">Packet capture</span></div>
+      <div class="tech-item"><span class="tech-name">Scikit-learn</span><span class="tech-role">ML framework</span></div>
+      <div class="tech-item"><span class="tech-name">Random Forest</span><span class="tech-role">Classifier</span></div>
+      <div class="tech-item"><span class="tech-name">SHAP</span><span class="tech-role">Explainability</span></div>
+      <div class="tech-item"><span class="tech-name">imbalanced-learn</span><span class="tech-role">SMOTE balancing</span></div>
+      <div class="tech-item"><span class="tech-name">Flask</span><span class="tech-role">Dashboard</span></div>
+      <div class="tech-item"><span class="tech-name">AWS SNS</span><span class="tech-role">SMS alerting</span></div>
+      <div class="tech-item"><span class="tech-name">AbuseIPDB</span><span class="tech-role">Threat intelligence</span></div>
+      <div class="tech-item"><span class="tech-name">SQLite</span><span class="tech-role">Persistence</span></div>
+      <div class="tech-item"><span class="tech-name">Raspberry Pi 5</span><span class="tech-role">Deployment hardware</span></div>
+      <div class="tech-item"><span class="tech-name">CIC-IDS-2017</span><span class="tech-role">Training dataset</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <footer>
+    <span>PiSentry - ML-Powered NIDS</span>
+    <span>Liam Doocey - BSc Computer Science, SETU 2026</span>
+    <a href="https://github.com/LiamDoocey/PiSentry">github.com/LiamDoocey/PiSentry</a>
+  </footer>
+</div>
+
+</body>
+</html>
